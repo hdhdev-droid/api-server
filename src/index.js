@@ -14,12 +14,12 @@ app.get('/sample', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'sample.html'));
 });
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.json({
     message: 'API Server',
     version: '1.0.0',
-    sample: 'GET /sample 또는 /sample.html',
     endpoints: {
+      tables: 'GET /api/tables',
       health: 'GET /api/health',
       items: 'GET /api/items',
       itemsById: 'GET /api/items/:id',

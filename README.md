@@ -35,18 +35,24 @@ npm run dev
 
 로컬에서는 프로젝트 루트에 `.env` 파일을 두거나, `.env.example`을 복사해 `.env`로 만든 뒤 값을 채워 사용할 수 있습니다. (실제 값은 Git에 올리지 마세요.)
 
+DB는 **PostgreSQL**을 사용합니다. `DB_HOST`, `DB_NAME` 등이 설정되어 있으면 메인 페이지에서 테이블 목록을 조회합니다.
+
+## 메인 페이지
+
+- **http://localhost:3000/** — DB에 연결해 **public** 스키마의 테이블 목록을 표시합니다.  
+  DB가 설정되지 않았거나 연결에 실패하면 안내 메시지가 표시됩니다.
+
 ## 샘플 페이지
 
-서버 실행 후 브라우저에서 다음 주소로 접속하면 API를 테스트할 수 있습니다.
-
-- **http://localhost:3000/sample** 또는 **http://localhost:3000/sample.html**
+- **http://localhost:3000/sample** 또는 **http://localhost:3000/sample.html** — API 테스트용 페이지입니다.
 
 ## API 엔드포인트
 
 | 메서드 | 경로 | 설명 |
 |--------|------|------|
-| GET | `/` | API 정보 |
-| GET | `/sample` | 샘플 페이지 (HTML) |
+| GET | `/` | 메인 페이지 (DB 테이블 목록) |
+| GET | `/api` | API 정보 (JSON) |
+| GET | `/api/tables` | DB 테이블 목록 (JSON) |
 | GET | `/api/health` | 헬스 체크 |
 | GET | `/api/items` | 아이템 목록 |
 | GET | `/api/items/:id` | 아이템 조회 |
