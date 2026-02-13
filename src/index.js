@@ -1,10 +1,10 @@
 const express = require('express');
+const path = require('path');
+const config = require('./config');
 const routes = require('./routes');
 
-const path = require('path');
-
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = config.PORT;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
