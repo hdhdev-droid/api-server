@@ -4,11 +4,14 @@ const db = require('../db');
 const router = express.Router();
 
 router.get('/tables', async (req, res) => {
-  const result = await db.getTables();
-  if (result.error) {
-    return res.status(result.tables ? 200 : 503).json(result);
+  try {
+    const result = await db.getTables();
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.json(result);
+  } catch (err) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.status(500).json({ error: err.message || '서버 오류' });
   }
-  res.json(result);
 });
 
 router.get('/health', (req, res) => {

@@ -59,7 +59,16 @@
 
       try {
         const res = await fetch('/api/tables');
-        const data = await res.json();
+        const text = await res.text();
+        let data;
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch (parseErr) {
+          statusDot.className = 'status-dot error';
+          statusText.textContent = '오류';
+          content.innerHTML = '<p class="error-msg">서버 응답을 읽을 수 없습니다. (JSON 아님)</p>';
+          return;
+        }
 
         if (data.error && !data.tables) {
           statusDot.className = 'status-dot error';
