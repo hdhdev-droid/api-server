@@ -35,10 +35,21 @@
     .error-msg { color: #dc2626; background: #fef2f2; padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; }
     .link { color: #4361ee; text-decoration: none; }
     .link:hover { text-decoration: underline; }
+    table.env-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    table.env-table th, table.env-table td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #eee; }
+    table.env-table th { color: #64748b; font-weight: 500; width: 140px; }
+    table.env-table td { font-family: ui-monospace, monospace; word-break: break-all; }
+    table.env-table .value-empty { color: #94a3b8; }
   </style>
 </head>
 <body>
   <h1>API Server</h1>
+  <div class="card">
+    <h2>DB 환경 변수</h2>
+    <div id="envContent">
+      <p class="message">불러오는 중...</p>
+    </div>
+  </div>
   <div class="card">
     <h2>DB 테이블 목록</h2>
     <div class="status">
@@ -58,6 +69,28 @@
       const statusDot = document.getElementById('statusDot');
       const statusText = document.getElementById('statusText');
       const content = document.getElementById('content');
+      const envContent = document.getElementById('envContent');
+
+      function renderEnvTable(env) {
+        const rows = Object.entries(env).map(function (e) {
+          const val = escapeHtml(e[1]);
+          const cls = e[1] === '(미설정)' ? ' class="value-empty"' : '';
+          return '<tr><th>' + escapeHtml(e[0]) + '</th><td' + cls + '>' + val + '</td></tr>';
+        }).join('');
+        return '<table class="env-table"><tbody>' + rows + '</tbody></table>';
+      }
+
+      try {
+        const configRes = await fetch('/api/config');
+        if (configRes.ok) {
+          const configData = await configRes.json();
+          envContent.innerHTML = renderEnvTable(configData.env || {});
+        } else {
+          envContent.innerHTML = '<p class="message">환경 변수를 불러올 수 없습니다.</p>';
+        }
+      } catch (e) {
+        envContent.innerHTML = '<p class="error-msg">' + escapeHtml(e.message) + '</p>';
+      }
 
       try {
         const res = await fetch('/api/tables');

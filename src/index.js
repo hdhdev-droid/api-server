@@ -48,6 +48,7 @@ app.get('/api', (req, res) => {
     message: 'API Server',
     version: '1.0.0',
     endpoints: {
+      config: 'GET /api/config',
       tables: 'GET /api/tables',
       health: 'GET /api/health',
       items: 'GET /api/items',
