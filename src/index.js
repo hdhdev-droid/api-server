@@ -101,8 +101,10 @@ app.get('/api', (req, res) => {
     endpoints: {
       config: 'GET /api/config',
       tables: 'GET /api/tables',
+      createTable: 'POST /api/tables (body: { tableName })',
+      tableRows: 'POST /api/tables/:tableName/rows (body: { name }), DELETE /api/tables/:tableName/rows/:id',
       health: 'GET /api/health',
-      items: 'GET /api/items',
+      items: 'GET /api/items, POST /api/items (body: { name }), DELETE /api/items/:id',
       itemsById: 'GET /api/items/:id',
     },
   });

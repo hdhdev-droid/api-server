@@ -33,6 +33,49 @@ router.get('/tables', async (req, res) => {
   }
 });
 
+router.post('/tables', async (req, res) => {
+  const { tableName } = req.body;
+  if (!tableName || typeof tableName !== 'string') {
+    return res.status(400).json({ error: 'tableName is required (string)' });
+  }
+  try {
+    const result = await db.createTable(tableName.trim());
+    if (result == null) return res.status(503).json({ error: 'DB 연결을 사용할 수 없습니다.' });
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/tables/:tableName/rows', async (req, res) => {
+  const { tableName } = req.params;
+  const { name } = req.body;
+  if (!name || typeof name !== 'string') {
+    return res.status(400).json({ error: 'name is required (string)' });
+  }
+  try {
+    const row = await db.addRow(tableName, name.trim());
+    if (row == null) return res.status(503).json({ error: 'DB 연결을 사용할 수 없습니다.' });
+    res.status(201).json(row);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.delete('/tables/:tableName/rows/:id', async (req, res) => {
+  const { tableName, id } = req.params;
+  const numId = parseInt(id, 10);
+  if (Number.isNaN(numId)) return res.status(400).json({ error: 'Invalid id' });
+  try {
+    const deleted = await db.deleteRow(tableName, numId);
+    if (deleted == null) return res.status(503).json({ error: 'DB 연결을 사용할 수 없습니다.' });
+    if (!deleted) return res.status(404).json({ error: 'Not found' });
+    res.json({ deleted: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -71,6 +114,19 @@ router.post('/items', async (req, res) => {
       return res.status(503).json({ error: 'DB 연결을 사용할 수 없습니다. 아이템은 DB에만 저장됩니다.' });
     }
     res.status(201).json(newItem);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/items/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
+  try {
+    const deleted = await db.deleteItem(id);
+    if (deleted == null) return res.status(503).json({ error: 'DB 연결을 사용할 수 없습니다.' });
+    if (!deleted) return res.status(404).json({ error: 'Not found' });
+    res.json({ deleted: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -98,6 +98,49 @@ async function pgCreateItem(name) {
   return itemFromRow(result.rows[0]);
 }
 
+async function pgDeleteItem(id) {
+  await pgEnsureItems();
+  const result = await getPgPool().query('DELETE FROM items WHERE id = $1', [id]);
+  return result.rowCount > 0;
+}
+
+function safeTableName(name) {
+  if (typeof name !== 'string' || !/^[a-zA-Z0-9_]+$/.test(name)) return null;
+  return name;
+}
+
+async function pgCreateTable(tableName) {
+  const safe = safeTableName(tableName);
+  if (!safe) throw new Error('Invalid table name');
+  const pool = getPgPool();
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS "${safe}" (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  return { tableName: safe };
+}
+
+async function pgAddRow(tableName, name) {
+  const safe = safeTableName(tableName);
+  if (!safe) throw new Error('Invalid table name');
+  const pool = getPgPool();
+  const result = await pool.query(
+    `INSERT INTO "${safe}" (name) VALUES ($1) RETURNING id, name, created_at`,
+    [name]
+  );
+  return itemFromRow(result.rows[0]);
+}
+
+async function pgDeleteRow(tableName, id) {
+  const safe = safeTableName(tableName);
+  if (!safe) throw new Error('Invalid table name');
+  const result = await getPgPool().query(`DELETE FROM "${safe}" WHERE id = $1`, [id]);
+  return result.rowCount > 0;
+}
+
 // ---------- MySQL / MariaDB ----------
 function getMysqlPool() {
   if (mysqlPool) return mysqlPool;
@@ -168,6 +211,41 @@ async function mysqlCreateItem(name) {
   return itemFromRow(rows[0]);
 }
 
+async function mysqlDeleteItem(id) {
+  await mysqlEnsureItems();
+  const [result] = await getMysqlPool().query('DELETE FROM items WHERE id = ?', [id]);
+  return result.affectedRows > 0;
+}
+
+async function mysqlCreateTable(tableName) {
+  const safe = safeTableName(tableName);
+  if (!safe) throw new Error('Invalid table name');
+  await getMysqlPool().query(`
+    CREATE TABLE IF NOT EXISTS \`${safe}\` (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6)
+    )
+  `);
+  return { tableName: safe };
+}
+
+async function mysqlAddRow(tableName, name) {
+  const safe = safeTableName(tableName);
+  if (!safe) throw new Error('Invalid table name');
+  const pool = getMysqlPool();
+  const [result] = await pool.query(`INSERT INTO \`${safe}\` (name) VALUES (?)`, [name]);
+  const [rows] = await pool.query(`SELECT id, name, created_at FROM \`${safe}\` WHERE id = ?`, [result.insertId]);
+  return itemFromRow(rows[0]);
+}
+
+async function mysqlDeleteRow(tableName, id) {
+  const safe = safeTableName(tableName);
+  if (!safe) throw new Error('Invalid table name');
+  const [result] = await getMysqlPool().query(`DELETE FROM \`${safe}\` WHERE id = ?`, [id]);
+  return result.affectedRows > 0;
+}
+
 // ---------- MongoDB ----------
 async function getMongoDb() {
   if (mongoDb) return mongoDb;
@@ -233,6 +311,45 @@ async function mongoCreateItem(name) {
   };
   await col.insertOne(doc);
   return mongoDocToItem(doc);
+}
+
+async function mongoDeleteItem(id) {
+  const numId = parseInt(id, 10);
+  if (Number.isNaN(numId)) return false;
+  const database = await getMongoDb();
+  const col = mongoItemsCollection(database);
+  const result = await col.deleteOne({ id: numId });
+  return result.deletedCount > 0;
+}
+
+async function mongoCreateTable(tableName) {
+  const safe = safeTableName(tableName);
+  if (!safe) throw new Error('Invalid table name');
+  const database = await getMongoDb();
+  await database.createCollection(safe);
+  return { tableName: safe };
+}
+
+async function mongoAddRow(tableName, name) {
+  const safe = safeTableName(tableName);
+  if (!safe) throw new Error('Invalid table name');
+  const database = await getMongoDb();
+  const col = database.collection(safe);
+  const last = await col.find().sort({ id: -1 }).limit(1).toArray();
+  const nextId = last.length > 0 ? last[0].id + 1 : 1;
+  const doc = { id: nextId, name, createdAt: new Date() };
+  await col.insertOne(doc);
+  return mongoDocToItem(doc);
+}
+
+async function mongoDeleteRow(tableName, id) {
+  const safe = safeTableName(tableName);
+  if (!safe) throw new Error('Invalid table name');
+  const numId = parseInt(id, 10);
+  if (Number.isNaN(numId)) return false;
+  const database = await getMongoDb();
+  const result = await database.collection(safe).deleteOne({ id: numId });
+  return result.deletedCount > 0;
 }
 
 // ---------- 연결 확인 (ping) ----------
@@ -306,6 +423,42 @@ async function createItem(name) {
   return null;
 }
 
+async function deleteItem(id) {
+  if (!isConfigured()) return null;
+  const t = getDbType();
+  if (t === 'POSTGRESQL') return await pgDeleteItem(id);
+  if (t === 'MYSQL' || t === 'MARIADB') return await mysqlDeleteItem(id);
+  if (t === 'MONGODB') return await mongoDeleteItem(id);
+  return null;
+}
+
+async function createTable(tableName) {
+  if (!isConfigured()) return null;
+  const t = getDbType();
+  if (t === 'POSTGRESQL') return await pgCreateTable(tableName);
+  if (t === 'MYSQL' || t === 'MARIADB') return await mysqlCreateTable(tableName);
+  if (t === 'MONGODB') return await mongoCreateTable(tableName);
+  return null;
+}
+
+async function addRow(tableName, name) {
+  if (!isConfigured()) return null;
+  const t = getDbType();
+  if (t === 'POSTGRESQL') return await pgAddRow(tableName, name);
+  if (t === 'MYSQL' || t === 'MARIADB') return await mysqlAddRow(tableName, name);
+  if (t === 'MONGODB') return await mongoAddRow(tableName, name);
+  return null;
+}
+
+async function deleteRow(tableName, id) {
+  if (!isConfigured()) return null;
+  const t = getDbType();
+  if (t === 'POSTGRESQL') return await pgDeleteRow(tableName, id);
+  if (t === 'MYSQL' || t === 'MARIADB') return await mysqlDeleteRow(tableName, id);
+  if (t === 'MONGODB') return await mongoDeleteRow(tableName, id);
+  return null;
+}
+
 module.exports = {
   getDbType,
   isConfigured,
@@ -314,4 +467,8 @@ module.exports = {
   getItems,
   getItemById,
   createItem,
+  deleteItem,
+  createTable,
+  addRow,
+  deleteRow,
 };
