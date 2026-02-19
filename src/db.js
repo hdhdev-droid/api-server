@@ -1,4 +1,5 @@
 const config = require('./config');
+const dbLogger = require('./dbLogger');
 
 const DB_TYPES = ['POSTGRESQL', 'MYSQL', 'MARIADB', 'MONGODB'];
 const PORT_TO_TYPE = { 5432: 'POSTGRESQL', 3306: 'MYSQL', 27017: 'MONGODB' };
@@ -7,6 +8,7 @@ let pgPool = null;
 let mysqlPool = null;
 let mongoClient = null;
 let mongoDb = null;
+let pingOkLogged = false;
 
 function getDbType() {
   const explicit = config.DB_TYPE ? config.DB_TYPE.toUpperCase() : null;
@@ -39,10 +41,12 @@ function itemFromRow(r) {
 function getPgPool() {
   if (pgPool) return pgPool;
   const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = config;
+  const port = DB_PORT ? parseInt(DB_PORT, 10) : 5432;
+  dbLogger.addLog('Connecting to PostgreSQL ' + JSON.stringify({ host: DB_HOST, port, database: DB_NAME, user: DB_USER }));
   const { Pool } = require('pg');
   pgPool = new Pool({
     host: DB_HOST,
-    port: DB_PORT ? parseInt(DB_PORT, 10) : 5432,
+    port,
     database: DB_NAME,
     user: DB_USER,
     password: DB_PASSWORD,
@@ -102,10 +106,12 @@ async function pgCreateItem(name) {
 function getMysqlPool() {
   if (mysqlPool) return mysqlPool;
   const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = config;
+  const port = DB_PORT ? parseInt(DB_PORT, 10) : 3306;
+  dbLogger.addLog('Connecting to MySQL/MariaDB ' + JSON.stringify({ host: DB_HOST, port, database: DB_NAME, user: DB_USER }));
   const mysql = require('mysql2/promise');
   mysqlPool = mysql.createPool({
     host: DB_HOST,
-    port: DB_PORT ? parseInt(DB_PORT, 10) : 3306,
+    port,
     database: DB_NAME,
     user: DB_USER,
     password: DB_PASSWORD,
@@ -174,10 +180,13 @@ async function getMongoDb() {
   if (!url) {
     const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = config;
     const port = DB_PORT ? parseInt(DB_PORT, 10) : 27017;
+    dbLogger.addLog('Connecting to MongoDB ' + JSON.stringify({ host: DB_HOST, port, database: DB_NAME, user: DB_USER ? '(set)' : '(none)' }));
     const auth = DB_USER && DB_PASSWORD
       ? `${encodeURIComponent(DB_USER)}:${encodeURIComponent(DB_PASSWORD)}@`
       : '';
     url = `mongodb://${auth}${DB_HOST}:${port}/${DB_NAME}`;
+  } else {
+    dbLogger.addLog('Connecting to MongoDB via DB_URI');
   }
   mongoClient = new MongoClient(url);
   await mongoClient.connect();
@@ -242,19 +251,23 @@ async function ping() {
   try {
     if (t === 'POSTGRESQL') {
       await getPgPool().query('SELECT 1');
+      if (!pingOkLogged) { dbLogger.addLog('Ping OK (PostgreSQL)'); pingOkLogged = true; }
       return true;
     }
     if (t === 'MYSQL' || t === 'MARIADB') {
       await getMysqlPool().query('SELECT 1');
+      if (!pingOkLogged) { dbLogger.addLog('Ping OK (MySQL/MariaDB)'); pingOkLogged = true; }
       return true;
     }
     if (t === 'MONGODB') {
       const db = await getMongoDb();
       await db.command({ ping: 1 });
+      if (!pingOkLogged) { dbLogger.addLog('Ping OK (MongoDB)'); pingOkLogged = true; }
       return true;
     }
     return false;
   } catch (err) {
+    dbLogger.addLog('Ping failed: ' + err.message, true);
     return false;
   }
 }
