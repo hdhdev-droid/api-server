@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const config = require('./config');
 const db = require('./db');
@@ -9,6 +10,7 @@ const routes = require('./routes');
 const app = express();
 const PORT = config.PORT;
 
+app.use(cors());
 app.use(express.json());
 
 app.get('/ok', (req, res) => {
