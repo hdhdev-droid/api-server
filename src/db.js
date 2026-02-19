@@ -13,7 +13,6 @@ let pingOkLogged = false;
 function getDbType() {
   const explicit = config.DB_TYPE ? config.DB_TYPE.toUpperCase() : null;
   if (explicit && DB_TYPES.includes(explicit)) return explicit;
-  if (config.DB_URI && (config.DB_URI.trim() !== '')) return 'MONGODB';
   const port = config.DB_PORT != null && config.DB_PORT !== '' ? parseInt(config.DB_PORT, 10) : NaN;
   if (Number.isNaN(port)) return null;
   return PORT_TO_TYPE[port] || null;
@@ -22,9 +21,6 @@ function getDbType() {
 function isConfigured() {
   const t = getDbType();
   if (!t) return false;
-  if (t === 'MONGODB') {
-    return !!(config.DB_URI || (config.DB_HOST && config.DB_NAME));
-  }
   return !!(config.DB_HOST && config.DB_NAME);
 }
 
@@ -176,18 +172,13 @@ async function mysqlCreateItem(name) {
 async function getMongoDb() {
   if (mongoDb) return mongoDb;
   const { MongoClient } = require('mongodb');
-  let url = config.DB_URI;
-  if (!url) {
-    const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = config;
-    const port = DB_PORT ? parseInt(DB_PORT, 10) : 27017;
-    dbLogger.addLog('Connecting to MongoDB ' + JSON.stringify({ host: DB_HOST, port, database: DB_NAME, user: DB_USER ? '(set)' : '(none)' }));
-    const auth = DB_USER && DB_PASSWORD
-      ? `${encodeURIComponent(DB_USER)}:${encodeURIComponent(DB_PASSWORD)}@`
-      : '';
-    url = `mongodb://${auth}${DB_HOST}:${port}/${DB_NAME}`;
-  } else {
-    dbLogger.addLog('Connecting to MongoDB via DB_URI');
-  }
+  const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = config;
+  const port = DB_PORT ? parseInt(DB_PORT, 10) : 27017;
+  dbLogger.addLog('Connecting to MongoDB ' + JSON.stringify({ host: DB_HOST, port, database: DB_NAME, user: DB_USER ? '(set)' : '(none)' }));
+  const auth = DB_USER && DB_PASSWORD
+    ? `${encodeURIComponent(DB_USER)}:${encodeURIComponent(DB_PASSWORD)}@`
+    : '';
+  const url = `mongodb://${auth}${DB_HOST}:${port}/${DB_NAME}`;
   mongoClient = new MongoClient(url);
   await mongoClient.connect();
   mongoDb = config.DB_NAME ? mongoClient.db(config.DB_NAME) : mongoClient.db();

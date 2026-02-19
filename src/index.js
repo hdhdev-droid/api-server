@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const config = require('./config');
@@ -10,8 +11,16 @@ const PORT = config.PORT;
 
 app.use(express.json());
 
+app.get('/ok', (req, res) => {
+  res.type('text/plain').send('OK');
+});
+
+app.get('/gateway-timeout', (req, res) => {
+  res.status(504).type('text/plain').send('Gateway Timeout');
+});
+
 function getDbEnvForDisplay() {
-  const keys = ['PORT', 'DB_TYPE', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_URI'];
+  const keys = ['PORT', 'DB_TYPE', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
   const out = {};
   for (const key of keys) {
     const v = config[key];

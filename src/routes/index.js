@@ -5,7 +5,7 @@ const db = require('../db');
 const router = express.Router();
 
 function getDbEnvForDisplay() {
-  const keys = ['DB_TYPE', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_URI'];
+  const keys = ['DB_TYPE', 'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
   const out = {};
   for (const key of keys) {
     const v = config[key];

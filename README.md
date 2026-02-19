@@ -33,7 +33,6 @@ npm run dev
 | `DB_NAME` | DB(데이터베이스/스키마) 이름 |
 | `DB_USER` | DB 사용자 |
 | `DB_PASSWORD` | DB 비밀번호 |
-| `DB_URI` | (선택) MongoDB 연결 문자열. 있으면 MongoDB로 연결. 없으면 위 호스트/포트 등으로 연결 |
 
 로컬에서는 프로젝트 루트에 `.env` 파일을 두거나, `.env.example`을 복사해 `.env`로 만든 뒤 값을 채워 사용할 수 있습니다. (실제 값은 Git에 올리지 마세요.)
 
