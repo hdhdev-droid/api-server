@@ -4,7 +4,7 @@
  * DB_TYPE: POSTGRESQL | MYSQL | MARIADB | MONGODB
  */
 module.exports = {
-  PORT: process.env.WEB_PORT || 81,
+  PORT: process.env.WAS_PORT || process.env.WEB_PORT || process.env.PORT || 3000,
   DB_TYPE: process.env.DB_TYPE ? process.env.DB_TYPE.toUpperCase() : null,
   DB_HOST: process.env.DB_HOST,
   DB_PORT: process.env.DB_PORT,
