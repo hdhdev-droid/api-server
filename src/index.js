@@ -2,10 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
 const config = require('./config');
 const db = require('./db');
 const dbLogger = require('./dbLogger');
 const routes = require('./routes');
+const swaggerSpec = require('./swagger');
 
 const app = express();
 const PORT = config.PORT;
@@ -14,6 +16,9 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/static', express.static(path.join(__dirname, '..', 'static')));
+
+// Swagger UI — DB 미들웨어 앞에 두어 항상 문서 접근 가능
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customSiteTitle: 'api-server API' }));
 
 app.get('/ok', (req, res) => {
   res.type('text/plain').send('OK');
@@ -102,6 +107,7 @@ app.get('/api', (req, res) => {
   res.json({
     message: 'API Server',
     version: '1.0.0',
+    docs: '/api-docs',
     endpoints: {
       config: 'GET /api/config',
       tables: 'GET /api/tables',
