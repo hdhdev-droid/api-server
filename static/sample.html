@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Server - 샘플 (static)</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h1>API Server 샘플</h1>
+  <p class="muted">아래에서 API를 호출해 보세요.</p>
+  <p><a class="link" href="index.html">← 메인 페이지 (DB 테이블 목록)</a></p>
+
+  <section>
+    <h2>헬스 체크</h2>
+    <button type="button" id="btnHealth">Health Check</button>
+    <pre id="outHealth">결과가 여기 표시됩니다.</pre>
+  </section>
+
+  <section>
+    <h2>아이템 목록</h2>
+    <button type="button" id="btnItems">목록 가져오기</button>
+    <pre id="outItems">결과가 여기 표시됩니다.</pre>
+  </section>
+
+  <section>
+    <h2>아이템 추가</h2>
+    <form id="formItem">
+      <div class="row">
+        <input type="text" name="name" placeholder="이름" required>
+        <input type="submit" value="추가">
+      </div>
+    </form>
+    <pre id="outPost">결과가 여기 표시됩니다.</pre>
+  </section>
+
+  <script src="js/api.js"></script>
+  <script src="js/sample.js"></script>
+</body>
+</html>

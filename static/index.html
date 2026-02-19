@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Server - 메인 (static)</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h1>API Server</h1>
+  <div class="card">
+    <h2>DB 환경 변수</h2>
+    <div id="envContent">
+      <p class="message">불러오는 중...</p>
+    </div>
+  </div>
+  <div class="card">
+    <h2>DB 테이블 목록</h2>
+    <div class="status">
+      <span class="status-dot pending" id="statusDot"></span>
+      <span id="statusText">연결 중...</span>
+    </div>
+    <div id="content">
+      <p class="message">불러오는 중...</p>
+    </div>
+  </div>
+  <p>
+    <a class="link" href="sample.html">샘플 API 테스트 페이지</a>
+  </p>
+  <script src="js/api.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

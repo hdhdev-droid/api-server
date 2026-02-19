@@ -47,6 +47,13 @@ npm run dev
 
 - **http://localhost:3000/sample** 또는 **http://localhost:3000/sample.html** — API 테스트용 페이지입니다.
 
+## static 폴더 (HTML + JS + CSS)
+
+- **http://localhost:3000/static/index.html** — 메인과 동일한 기능 (DB 환경 변수, 테이블 목록). API만 호출하여 구현.
+- **http://localhost:3000/static/sample.html** — 샘플과 동일한 기능 (헬스 체크, 아이템 목록·추가). API만 호출하여 구현.
+
+`static/` 안에는 HTML, JS, CSS만 있으며 모든 데이터는 API(`/api/*`)로만 조회·변경합니다.
+
 ## API 엔드포인트
 
 | 메서드 | 경로 | 설명 |
