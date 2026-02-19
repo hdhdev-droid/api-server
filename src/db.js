@@ -1,7 +1,7 @@
 const config = require('./config');
 
 const DB_TYPES = ['POSTGRESQL', 'MYSQL', 'MARIADB', 'MONGODB'];
-const type = config.DB_TYPE ? config.DB_TYPE.toUpperCase() : null;
+const PORT_TO_TYPE = { 5432: 'POSTGRESQL', 3306: 'MYSQL', 27017: 'MONGODB' };
 
 let pgPool = null;
 let mysqlPool = null;
@@ -9,8 +9,12 @@ let mongoClient = null;
 let mongoDb = null;
 
 function getDbType() {
-  if (!type || !DB_TYPES.includes(type)) return null;
-  return type;
+  const explicit = config.DB_TYPE ? config.DB_TYPE.toUpperCase() : null;
+  if (explicit && DB_TYPES.includes(explicit)) return explicit;
+  if (config.DB_URI && (config.DB_URI.trim() !== '')) return 'MONGODB';
+  const port = config.DB_PORT != null && config.DB_PORT !== '' ? parseInt(config.DB_PORT, 10) : NaN;
+  if (Number.isNaN(port)) return null;
+  return PORT_TO_TYPE[port] || null;
 }
 
 function isConfigured() {
