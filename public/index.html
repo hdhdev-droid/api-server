@@ -72,8 +72,9 @@
       const envContent = document.getElementById('envContent');
 
       function renderEnvTable(env) {
+        if (!env || typeof env !== 'object') return '';
         const rows = Object.entries(env).map(function (e) {
-          const val = escapeHtml(e[1]);
+          const val = escapeHtml(String(e[1]));
           const cls = e[1] === '(미설정)' ? ' class="value-empty"' : '';
           return '<tr><th>' + escapeHtml(e[0]) + '</th><td' + cls + '>' + val + '</td></tr>';
         }).join('');
@@ -81,33 +82,21 @@
       }
 
       try {
-        const configRes = await fetch('/api/config');
-        if (configRes.ok) {
-          const configData = await configRes.json();
-          envContent.innerHTML = renderEnvTable(configData.env || {});
-        } else {
-          envContent.innerHTML = '<p class="message">환경 변수를 불러올 수 없습니다.</p>';
-        }
-      } catch (e) {
-        envContent.innerHTML = '<p class="error-msg">' + escapeHtml(e.message) + '</p>';
-      }
+        const res = await fetch('/api/main');
+        const data = await res.json();
 
-      try {
-        const res = await fetch('/api/tables');
-        const text = await res.text();
-        let data;
-        try {
-          data = text ? JSON.parse(text) : {};
-        } catch (parseErr) {
+        envContent.innerHTML = renderEnvTable(data.env || {});
+
+        if (!res.ok) {
           statusDot.className = 'status-dot error';
-          statusText.textContent = '오류';
-          content.innerHTML = '<p class="error-msg">서버 응답을 읽을 수 없습니다. (JSON 아님)</p>';
+          statusText.textContent = '연결 불가';
+          content.innerHTML = '<p class="error-msg">' + escapeHtml(data.error || '서버 오류') + '</p>';
           return;
         }
 
-        if (data.error && !data.tables) {
+        if (data.error && !(data.tables && data.tables.length > 0)) {
           statusDot.className = 'status-dot error';
-          statusText.textContent = 'DB 미설정 또는 오류';
+          statusText.textContent = '오류';
           content.innerHTML = '<p class="error-msg">' + escapeHtml(data.error) + '</p>';
           return;
         }
@@ -120,7 +109,7 @@
             data.tables.map(function (name) { return '<li>' + escapeHtml(name) + '</li>'; }).join('') +
             '</ul>';
         } else {
-          content.innerHTML = '<p class="message">public 스키마에 테이블이 없습니다.</p>';
+          content.innerHTML = '<p class="message">테이블이 없습니다.</p>';
         }
       } catch (e) {
         statusDot.className = 'status-dot error';
@@ -130,6 +119,7 @@
     })();
 
     function escapeHtml(s) {
+      if (s == null) return '';
       const div = document.createElement('div');
       div.textContent = s;
       return div.innerHTML;

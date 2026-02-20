@@ -22,6 +22,18 @@ router.get('/config', (req, res) => {
   res.json({ env: getDbEnvForDisplay() });
 });
 
+router.get('/main', async (req, res) => {
+  const env = getDbEnvForDisplay();
+  try {
+    const result = await db.getTables();
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.json({ env, tables: result.tables || [], error: result.error || null });
+  } catch (err) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.status(500).json({ env, tables: [], error: err.message || '서버 오류' });
+  }
+});
+
 router.get('/tables', async (req, res) => {
   try {
     const result = await db.getTables();

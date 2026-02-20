@@ -78,15 +78,25 @@ function getAccessDeniedHtml() {
 }
 
 app.use(async (req, res, next) => {
+  const isApi = req.path.startsWith('/api');
+  const sendUnavailable = (reason) => {
+    dbLogger.addLog('Access denied: ' + reason);
+    if (isApi) {
+      res.status(503).setHeader('Content-Type', 'application/json; charset=utf-8').json({
+        error: reason,
+        env: getDbEnvForDisplay(),
+      });
+    } else {
+      res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').setHeader('X-Service-Status', 'unavailable').send(getAccessDeniedHtml());
+    }
+  };
   if (!db.isConfigured()) {
-    dbLogger.addLog('Access denied: DB not configured (DB_TYPE/DB_HOST/DB_NAME or DB_PORT for inference)');
-    res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').setHeader('X-Service-Status', 'unavailable').send(getAccessDeniedHtml());
+    sendUnavailable('DB not configured (DB_TYPE/DB_HOST/DB_NAME or DB_PORT for inference)');
     return;
   }
   const ok = await db.ping();
   if (!ok) {
-    dbLogger.addLog('Access denied: DB ping failed');
-    res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').setHeader('X-Service-Status', 'unavailable').send(getAccessDeniedHtml());
+    sendUnavailable('DB ping failed');
     return;
   }
   next();

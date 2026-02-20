@@ -24,6 +24,16 @@ module.exports = {
         responses: { 200: { description: 'env (DB_TYPE, DB_HOST 등, 비밀번호 마스킹)' } },
       },
     },
+    '/api/main': {
+      get: {
+        summary: '메인 화면용 데이터 (env + 테이블 목록)',
+        tags: ['설정'],
+        responses: {
+          200: { description: 'env, tables, error(있을 경우)' },
+          503: { description: 'DB 미연결 시 JSON으로 error, env 반환' },
+        },
+      },
+    },
     '/api/health': {
       get: {
         summary: '헬스 체크',
