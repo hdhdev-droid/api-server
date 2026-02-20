@@ -147,14 +147,26 @@ function getMysqlPool() {
   const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = config;
   const port = DB_PORT ? parseInt(DB_PORT, 10) : 3306;
   dbLogger.addLog('Connecting to MySQL/MariaDB ' + JSON.stringify({ host: DB_HOST, port, database: DB_NAME, user: DB_USER }));
-  const mysql = require('mysql2/promise');
-  mysqlPool = mysql.createPool({
+  const mysql = require('mysql2');
+  const pool = mysql.createPool({
     host: DB_HOST,
     port,
     database: DB_NAME,
     user: DB_USER,
     password: DB_PASSWORD,
   });
+  // Promise 래퍼 (mysql2/promise 대신 콜백 API 사용)
+  pool.query = (function (orig) {
+    return function (sql, params) {
+      return new Promise((resolve, reject) => {
+        orig.call(pool, sql, params, (err, rows, fields) => {
+          if (err) reject(err);
+          else resolve([rows, fields]);
+        });
+      });
+    };
+  })(pool.query);
+  mysqlPool = pool;
   return mysqlPool;
 }
 
