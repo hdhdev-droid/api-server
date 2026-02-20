@@ -119,6 +119,7 @@ app.get('/api', (req, res) => {
     version: '1.0.0',
     docs: '/api/docs',
     endpoints: {
+      main: 'GET /api/main — 메인 화면용 (env + tables)',
       config: 'GET /api/config',
       tables: 'GET /api/tables',
       createTable: 'POST /api/tables (body: { tableName })',
